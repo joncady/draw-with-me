@@ -26,9 +26,20 @@ body {
 
 #cursor {
   position: absolute;
-  width: 10px;
-  height: 10px;
-  background-color: blue;
+  width: 20px;
+  height: 20px;
+  background-image: url('cursor.png');
+  background-size: contain;
   left: 0px;
   top: 0px;
+}
+
+.hide {
+  display: none;
+}
+
+#name {
+  position: absolute;
+  left: 20px;
+  top: 10px;
 }

@@ -1,7 +1,8 @@
 import React, { Component } from 'react';
 import io from 'socket.io-client';
-import { Alert } from 'reactstrap';
+import { Alert, Button } from 'reactstrap';
 import { SketchPicker } from 'react-color';
+import { Slider } from 'reactrangeslider';
 
 export default class DrawArea extends Component {
 
@@ -10,7 +11,8 @@ export default class DrawArea extends Component {
         this.state = {
             users: {},
             statusMessage: null,
-            pathStarted: false
+            pathStarted: false,
+            partner: null
         }
     }
 
@@ -26,6 +28,11 @@ export default class DrawArea extends Component {
         });
         socket.on('mouse', (data) => {
             if (data.id !== this.state.id) {
+                if (!this.state.partner) {
+                    this.setState({
+                        partner: data.name
+                    });
+                }
                 let cursor = this.state.cursor;
                 cursor.style.left = data.x + "px";
                 cursor.style.top = data.y + "px";
@@ -52,13 +59,15 @@ export default class DrawArea extends Component {
         socket.on('userConnect', data => {
             if (data.id !== this.state.id) {
                 this.setState({
-                    statusMessage: `${data.name} joined the drawing.`
+                    statusMessage: `${data.name} joined the drawing.`,
+                    partner: data.name
                 });
                 this.resetStatus();
             }
         });
         socket.on('userDisconnect', data => {
             this.setState({
+                partner: null,
                 statusMessage: `${data.name} left the drawing.`
             });
             this.resetStatus();
@@ -68,12 +77,15 @@ export default class DrawArea extends Component {
         const canvas2 = this.refs.partner;
         const draw2 = canvas2.getContext('2d');
         const cursor = this.refs.cursor;
+        const combine = this.refs.final;
+        const combineIt = combine.getContext('2d');
         this.setState({
             canvas: canvas,
             draw: draw,
             draw2: draw2,
             socket: socket,
-            cursor: cursor
+            cursor: cursor,
+            final: combineIt
         });
     }
 
@@ -83,16 +95,17 @@ export default class DrawArea extends Component {
         let x = e.nativeEvent.offsetX;
         let y = e.nativeEvent.offsetY;
         if (e.pressure) {
-            draw.lineWidth = 1 * e.pressure;
+            draw.lineWidth = 1 * e.pressure * this.state.width;
         } else {
-            draw.lineWidth = 10;
+            draw.lineWidth = this.state.width;
         }
         this.state.socket.emit("mouse", {
             x: x,
             y: y,
             clicked: clicked,
             id: id,
-            color: color
+            color: color,
+            name: this.props.name
         });
         if (clicked) {
             draw.lineTo(x, y);
@@ -115,8 +128,10 @@ export default class DrawArea extends Component {
     }
 
     mouseUp = () => {
+        this.state.socket.emit("mouse", {
+            clicked: false
+        });
         this.setState({ clicked: false });
-        this.state.draw.save();
     }
 
     mouseLeave = () => {
@@ -126,7 +141,17 @@ export default class DrawArea extends Component {
         this.setState({
             clicked: false
         });
-        this.state.draw.save();
+    }
+
+    savePic = () => {
+        const { draw, draw2, final } = this.state;
+        final.drawImage(draw.canvas, 0, 0);
+        final.drawImage(draw2.canvas, 0, 0);
+        let pictureLink = final.canvas.toDataURL('img/png');
+        let link = document.createElement("a");
+        link.setAttribute("href", pictureLink);
+        link.setAttribute("download", "drawing.png");
+        link.click();
     }
 
     setName = () => {
@@ -144,11 +169,18 @@ export default class DrawArea extends Component {
         return (
             <div>
                 <div id="sketch-area">
-                    <div ref="cursor" id="cursor"></div>
+                    <div ref="cursor" className={this.state.partner ? "" : "hide"} id="cursor">
+                        <p id="name">{this.state.partner}</p>
+                    </div>
                     <canvas ref="canvas" id="layer2" width={900} height={425} onPointerDown={this.mouseDown} onPointerUp={this.mouseUp} onPointerMove={this.mouseMoved}></canvas>
                     <canvas ref="partner" id="layer1" width={900} height={425}></canvas>
-                    <SketchPicker color={this.state.color} onChangeComplete={this.handleChangeComplete}></SketchPicker>
+                    <canvas style={{ display: 'none' }} ref="final" width={900} height={425}></canvas>
+                    <div>
+                        <Slider defaultValue={20} step={5} min={5} max={60} onChange={(width) => this.setState({ width: width })} />
+                        <SketchPicker color={this.state.color} onChangeComplete={this.handleChangeComplete}></SketchPicker>
+                    </div>
                 </div>
+                <Button onClick={this.savePic}>Save Drawing!</Button>
                 {this.state.statusMessage && <Alert>{this.state.statusMessage}</Alert>}
             </div>
         );
