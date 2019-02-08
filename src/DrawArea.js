@@ -12,7 +12,8 @@ export default class DrawArea extends Component {
             users: {},
             statusMessage: null,
             pathStarted: false,
-            partner: null
+            partner: null,
+            sidebarToggle: false
         }
     }
 
@@ -163,26 +164,52 @@ export default class DrawArea extends Component {
         const { draw } = this.state;
         draw.strokeStyle = color.hex;
         this.setState({ color: color.hex });
-    };
+    }
+
+    sidebar = () => {
+        let main = this.refs.main;
+        let sidebar = this.refs.sidenav;
+        sidebar.style.width = "250px";
+        main.style.marginRight = "250px";
+        this.setState({
+            sidebarToggle: true
+        });
+    }
+
+    closeSidebar = () => {
+        let main = this.refs.main;
+        let sidebar = this.refs.sidenav;
+        sidebar.style.width = "0px";
+        main.style.marginRight = "0px";
+        this.setState({
+            sidebarToggle: false
+        });
+    }
 
     render() {
         return (
-            <div>
-                <div id="sketch-area">
-                    <div ref="cursor" className={this.state.partner ? "" : "hide"} id="cursor">
-                        <p id="name">{this.state.partner}</p>
+            <main>
+                <div id="main" ref="main">
+                    <div id="sketch-area">
+                        <div ref="cursor" className={this.state.partner ? "" : "hide"} id="cursor">
+                            <p id="name">{this.state.partner}</p>
+                        </div>
+                        <canvas ref="canvas" id="layer2" width={900} height={425} onPointerDown={this.mouseDown} onPointerUp={this.mouseUp} onPointerMove={this.mouseMoved}></canvas>
+                        <canvas ref="partner" id="layer1" width={900} height={425}></canvas>
+                        <canvas style={{ display: 'none' }} ref="final" width={900} height={425}></canvas>
                     </div>
-                    <canvas ref="canvas" id="layer2" width={900} height={425} onPointerDown={this.mouseDown} onPointerUp={this.mouseUp} onPointerMove={this.mouseMoved}></canvas>
-                    <canvas ref="partner" id="layer1" width={900} height={425}></canvas>
-                    <canvas style={{ display: 'none' }} ref="final" width={900} height={425}></canvas>
-                    <div>
-                        <Slider defaultValue={20} step={5} min={5} max={60} onChange={(width) => this.setState({ width: width })} />
-                        <SketchPicker color={this.state.color} onChangeComplete={this.handleChangeComplete}></SketchPicker>
-                    </div>
+                    <Button onClick={this.savePic}>Save Drawing!</Button>
+                    {this.state.statusMessage && <Alert>{this.state.statusMessage}</Alert>}
                 </div>
-                <Button onClick={this.savePic}>Save Drawing!</Button>
-                {this.state.statusMessage && <Alert>{this.state.statusMessage}</Alert>}
-            </div>
+                <Button onClick={() => {
+                    this.state.sidebarToggle ? this.closeSidebar() : this.sidebar();
+                }}>Tools</Button>
+                <div className="sidenav" ref="sidenav">
+                    <h4>Line width</h4>
+                    <Slider defaultValue={20} step={5} min={5} max={60} onChange={(width) => this.setState({ width: width })} />
+                    <SketchPicker color={this.state.color} onChangeComplete={this.handleChangeComplete}></SketchPicker>
+                </div>
+            </main>
         );
     }
 
