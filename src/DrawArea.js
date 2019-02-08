@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import io from 'socket.io-client';
-import { Alert, InputGroup, Input, Button, Label } from 'reactstrap';
+import { Alert } from 'reactstrap';
+import { SketchPicker } from 'react-color';
 
 export default class DrawArea extends Component {
 
@@ -15,6 +16,9 @@ export default class DrawArea extends Component {
 
     componentDidMount() {
         const socket = io('https://draw-with-me-socket.herokuapp.com/');
+        socket.emit("name", {
+            name: this.props.name
+        });
         socket.on('userData', (data) => {
             this.setState({
                 id: data.id
@@ -22,8 +26,12 @@ export default class DrawArea extends Component {
         });
         socket.on('mouse', (data) => {
             if (data.id !== this.state.id) {
+                let cursor = this.state.cursor;
+                cursor.style.left = data.x + "px";
+                cursor.style.top = data.y + "px";
                 if (data.clicked) {
                     const draw2 = this.state.draw2;
+                    draw2.strokeStyle = data.color;
                     if (!this.state.pathStarted) {
                         draw2.beginPath();
                         draw2.moveTo(data.x, data.y)
@@ -37,16 +45,17 @@ export default class DrawArea extends Component {
                 } else {
                     this.setState({
                         pathStarted: false
-                    })
+                    });
                 }
             }
         });
         socket.on('userConnect', data => {
-            console.log(data);
-            this.setState({
-                statusMessage: `${data.id} joined the drawing.`
-            });
-            this.resetStatus();
+            if (data.id !== this.state.id) {
+                this.setState({
+                    statusMessage: `${data.name} joined the drawing.`
+                });
+                this.resetStatus();
+            }
         });
         socket.on('userDisconnect', data => {
             this.setState({
@@ -58,22 +67,32 @@ export default class DrawArea extends Component {
         const draw = canvas.getContext('2d');
         const canvas2 = this.refs.partner;
         const draw2 = canvas2.getContext('2d');
+        const cursor = this.refs.cursor;
         this.setState({
+            canvas: canvas,
             draw: draw,
             draw2: draw2,
-            socket: socket
+            socket: socket,
+            cursor: cursor
         });
     }
 
     mouseMoved = (e) => {
-        const { clicked, draw, id } = this.state;
+        e.nativeEvent.preventDefault();
+        const { clicked, draw, id, color } = this.state;
         let x = e.nativeEvent.offsetX;
         let y = e.nativeEvent.offsetY;
+        if (e.pressure) {
+            draw.lineWidth = 1 * e.pressure;
+        } else {
+            draw.lineWidth = 10;
+        }
         this.state.socket.emit("mouse", {
             x: x,
             y: y,
             clicked: clicked,
-            id: id
+            id: id,
+            color: color
         });
         if (clicked) {
             draw.lineTo(x, y);
@@ -97,6 +116,7 @@ export default class DrawArea extends Component {
 
     mouseUp = () => {
         this.setState({ clicked: false });
+        this.state.draw.save();
     }
 
     mouseLeave = () => {
@@ -106,15 +126,7 @@ export default class DrawArea extends Component {
         this.setState({
             clicked: false
         });
-    }
-
-    touch = (e) => {
-        var touch = e.touches[0];
-        var mouseEvent = new MouseEvent("mousemove", {
-            clientX: touch.clientX,
-            clientY: touch.clientY
-        });
-        this.state.draw.dispatchEvent(mouseEvent);
+        this.state.draw.save();
     }
 
     setName = () => {
@@ -122,16 +134,21 @@ export default class DrawArea extends Component {
         socket.emit("nameSelect", { id: id, name });
     }
 
+    handleChangeComplete = (color) => {
+        const { draw } = this.state;
+        draw.strokeStyle = color.hex;
+        this.setState({ color: color.hex });
+    };
+
     render() {
         return (
             <div>
-                <InputGroup id="name-set">
-                    <Label>Name</Label>
-                    <Input onChange={(e) => this.setState({ name: e.target.value })}></Input>
-                    <Button onClick={this.setName}>Set</Button>
-                </InputGroup>
-                <canvas ref="canvas" id="layer2" width={800} height={425} onTouchMove={this.touch} onMouseDown={this.mouseDown} onMouseLeave={this.mouseLeave} onMouseUp={this.mouseUp} onMouseMove={this.mouseMoved}></canvas>
-                <canvas ref="partner" id="layer1" width={800} height={425}></canvas>
+                <div id="sketch-area">
+                    <div ref="cursor" id="cursor"></div>
+                    <canvas ref="canvas" id="layer2" width={900} height={425} onPointerDown={this.mouseDown} onPointerUp={this.mouseUp} onPointerMove={this.mouseMoved}></canvas>
+                    <canvas ref="partner" id="layer1" width={900} height={425}></canvas>
+                    <SketchPicker color={this.state.color} onChangeComplete={this.handleChangeComplete}></SketchPicker>
+                </div>
                 {this.state.statusMessage && <Alert>{this.state.statusMessage}</Alert>}
             </div>
         );

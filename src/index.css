@@ -2,6 +2,10 @@
   width: 80%;
 }
 
+body {
+  touch-action: none;
+}
+
 #layer2 {
   position: absolute;
   left: 0;
@@ -14,4 +18,17 @@
   left: 0;
   top: 0;
   z-index: 0;
+}
+
+#sketch-area {
+  display: flex;
+}
+
+#cursor {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: blue;
+  left: 0px;
+  top: 0px;
 }
