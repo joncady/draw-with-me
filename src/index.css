@@ -6,6 +6,10 @@ body {
   touch-action: none;
 }
 
+canvas {
+  touch-action: none;
+}
+
 #layer2 {
   position: absolute;
   left: 0;

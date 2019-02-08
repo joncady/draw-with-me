@@ -3,7 +3,7 @@ import io from 'socket.io-client';
 import { Alert, Button } from 'reactstrap';
 import { SketchPicker } from 'react-color';
 import { Slider } from 'reactrangeslider';
-
+ 
 export default class DrawArea extends Component {
 
     constructor() {
