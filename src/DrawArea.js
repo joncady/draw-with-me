@@ -2,8 +2,7 @@ import React, { Component } from 'react';
 import io from 'socket.io-client';
 import { Alert, Button } from 'reactstrap';
 import { SketchPicker } from 'react-color';
-import { Slider } from 'reactrangeslider';
- 
+
 export default class DrawArea extends Component {
 
     constructor() {
@@ -13,7 +12,8 @@ export default class DrawArea extends Component {
             statusMessage: null,
             pathStarted: false,
             partner: null,
-            sidebarToggle: false
+            sidebarToggle: false,
+            width: 1
         }
     }
 
@@ -29,7 +29,7 @@ export default class DrawArea extends Component {
         });
         socket.on('mouse', (data) => {
             if (data.id !== this.state.id) {
-                if (!this.state.partner) {
+                if (!this.state.partner & this.state.id) {
                     this.setState({
                         partner: data.name
                     });
@@ -130,14 +130,16 @@ export default class DrawArea extends Component {
 
     mouseUp = () => {
         this.state.socket.emit("mouse", {
-            clicked: false
+            clicked: false,
+            id: this.state.id
         });
         this.setState({ clicked: false });
     }
 
     mouseLeave = () => {
         this.state.socket.emit("mouse", {
-            clicked: false
+            clicked: false,
+            id: this.state.id
         });
         this.setState({
             clicked: false
@@ -153,11 +155,6 @@ export default class DrawArea extends Component {
         link.setAttribute("href", pictureLink);
         link.setAttribute("download", "drawing.png");
         link.click();
-    }
-
-    setName = () => {
-        const { id, name, socket } = this.state;
-        socket.emit("nameSelect", { id: id, name });
     }
 
     handleChangeComplete = (color) => {
@@ -191,22 +188,20 @@ export default class DrawArea extends Component {
             <main>
                 <div id="main" ref="main">
                     <div id="sketch-area">
+                        <canvas ref="canvas" id="layer2" width={1000} height={425} onPointerDown={this.mouseDown} onPointerUp={this.mouseUp} onPointerMove={this.mouseMoved}></canvas>
+                        <canvas ref="partner" id="layer1" width={1000} height={425}></canvas>
+                        <canvas style={{ display: 'none' }} ref="final" width={1000} height={425}></canvas>
                         <div ref="cursor" className={this.state.partner ? "" : "hide"} id="cursor">
                             <p id="name">{this.state.partner}</p>
                         </div>
-                        <canvas ref="canvas" id="layer2" width={900} height={425} onPointerDown={this.mouseDown} onPointerUp={this.mouseUp} onPointerMove={this.mouseMoved}></canvas>
-                        <canvas ref="partner" id="layer1" width={900} height={425}></canvas>
-                        <canvas style={{ display: 'none' }} ref="final" width={900} height={425}></canvas>
                     </div>
                     <Button onClick={this.savePic}>Save Drawing!</Button>
+                    <Button onClick={() => {
+                        this.state.sidebarToggle ? this.closeSidebar() : this.sidebar();
+                    }}>Tools</Button>
                     {this.state.statusMessage && <Alert>{this.state.statusMessage}</Alert>}
                 </div>
-                <Button onClick={() => {
-                    this.state.sidebarToggle ? this.closeSidebar() : this.sidebar();
-                }}>Tools</Button>
                 <div className="sidenav" ref="sidenav">
-                    <h4>Line width</h4>
-                    <Slider defaultValue={20} step={5} min={5} max={60} onChange={(width) => this.setState({ width: width })} />
                     <SketchPicker color={this.state.color} onChangeComplete={this.handleChangeComplete}></SketchPicker>
                 </div>
             </main>

@@ -1,9 +1,10 @@
-#name-set {
-  width: 80%;
+@font-face {
+  font-family: Pointy;
+  src: url('pointy.ttf');
 }
 
-body {
-  touch-action: none;
+#name-set {
+  width: 80%;
 }
 
 canvas {
@@ -11,21 +12,22 @@ canvas {
 }
 
 #layer2 {
+  margin: 3rem;
   position: absolute;
   left: 0;
   top: 0;
   z-index: 1;
 }
 
-#layer2 {
-  position: absolute;
-  left: 0;
-  top: 0;
-  z-index: 0;
+#sketch-area {
+  padding: 3rem;
+  display: flex;
+  background-color: white;
 }
 
-#sketch-area {
-  display: flex;
+main {
+  background-color: #8fffb2!important;
+  height: 100vh;
 }
 
 #cursor {
@@ -48,6 +50,15 @@ canvas {
   top: 10px;
 }
 
+.display-3 {
+  font-family: Pointy;
+  font-size: 35px!important;
+}
+
+h3, .btn {
+  font-family: Pointy!important;
+}
+
 .sidenav {
   height: 100%; /* 100% Full-height */
   width: 0; /* 0 width - change this with JavaScript */
@@ -61,7 +72,55 @@ canvas {
   transition: 0.5s; /* 0.5 second transition effect to slide in the sidenav */
 }
 
+.jumbotron {
+  background-color: #8fffb2!important;
+  color: black;
+}
+
+#logo-area {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#logo {
+  width: 100px;
+  margin-left: 1rem;
+}
+
 #main {
   transition: margin-right .5s;
-  padding: 20px;
+}
+
+#name-entry {
+  width: 70%;
+  margin: 2rem auto;
+  text-align: center;
+}
+
+footer {
+  background-color: #FBD20A;
+  text-align: center;
+}
+
+#author {
+  font-family: Pointy;
+  padding: 2rem;
+  margin-bottom: 0;
+  font-weight: bold;
+}
+
+@media (min-width: 600px) {
+  #name-entry {
+    width: 30%;
+  }
+
+  #logo {
+    width: 150px;
+    margin-left: 3rem;
+  }
+
+  .display-3 {
+    font-size: 70px!important;
+  }
 }
