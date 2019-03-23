@@ -59,6 +59,7 @@ export default class DrawArea extends Component {
         });
         socket.on('userConnect', data => {
             if (data.id !== this.state.id) {
+                console.log("here");
                 this.setState({
                     statusMessage: `${data.name} joined the drawing.`,
                     partner: data.name
